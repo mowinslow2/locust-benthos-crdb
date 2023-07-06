@@ -1,0 +1,73 @@
+http:
+  enabled: true
+  address: 0.0.0.0:4195
+  root_path: /benthos
+  debug_endpoints: false
+  cert_file: ""
+  key_file: ""
+  cors:
+    enabled: false
+    allowed_origins: []
+  basic_auth:
+    enabled: false
+    realm: restricted
+    username: ""
+    password_hash: ""
+    algorithm: sha256
+    salt: ""
+input:
+  http_server:
+    address: ""
+    path: /tracking
+    ws_path: /post/ws
+    allowed_verbs:
+      - POST
+    timeout: 5s
+buffer:
+  none: {}
+pipeline:
+  threads: -1
+  processors: []
+output:
+  label: ""
+  sql_insert:
+    driver: "postgres"
+    dsn: postgresql://username:password@hostname:26257/defaultdb?sslmode=verify-full&sslrootcert=your_cert.crt
+    table: tracking # No default (required)
+    columns: [ride_id, latitude, longitude] # No default (required)
+    args_mapping: root = [ this.tracking.ride_id, this.tracking.latitude, this.tracking.longitude ] # No default (required)
+    max_in_flight: 500
+    batching:
+      count: 100
+      period: 1s
+logger:
+  level: INFO
+  format: logfmt
+  add_timestamp: false
+  level_name: level
+  timestamp_name: time
+  message_name: msg
+  static_fields:
+    '@service': benthos
+  file:
+    path: ""
+    rotate: false
+    rotate_max_age_days: 0
+metrics:
+  prometheus:
+    use_histogram_timing: false
+    histogram_buckets: []
+    add_process_metrics: false
+    add_go_metrics: false
+    push_url: ""
+    push_interval: ""
+    push_job_name: benthos_push
+    push_basic_auth:
+      username: ""
+      password: ""
+    file_output_path: ""
+  mapping: ""
+tracer:
+  none: {}
+shutdown_delay: ""
+shutdown_timeout: 20s
